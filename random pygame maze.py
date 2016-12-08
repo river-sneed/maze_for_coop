@@ -1,32 +1,26 @@
-# Imports
 import pygame
-import intersects
+import time
+import random
 
-# Initialize game engine
+#Set colors.
+BLACK   =(0,0,0)
+WHITE   =(255,255,255)
+RED     =(255,0,0)
+GREEN   =(0,255,0)
+BLUE    =(0,0,255)
+PURPLE  =(128,0,128)
+LRED    =(255,128,128)
+
 pygame.init()
 
+#Smallest space: 5.
+space=25
 
-# Window
-WIDTH = 1250
-HEIGHT = 950
-SIZE = (WIDTH, HEIGHT)
-TITLE = "Maze"
-screen = pygame.display.set_mode(SIZE)
-pygame.display.set_caption(TITLE)
+length=50
+width=25
 
-
-# Timer
-clock = pygame.time.Clock()
-refresh_rate = 100
-
-# Colors
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-WALL_COLOR = (random.randint(0,255),random.randint(0,255),random.randint)
+sizex=200+length*space
+sizey=200+width*space
 
 # Make a player
 player =  [200, 150, 25, 25]
@@ -34,171 +28,297 @@ player_vx = 0
 player_vy = 0
 player_speed = 3
 
-def make_maze(w = 200 , h = 100):
-    vis = [[0] * w + [1] for _ in range(h)] + [[1] * (w + 1)]
-    ver = [[MAZE_WALL, SPACE, SPACE] * w + [MAZE_WALL] for _ in range(h)] + [[]]
-    hor = [[MAZE_WALL, SPACE, SPACE] * w + [MAZE_WALL] for _ in range(h + 1)]
-
-    def walk(x, y):
-        vis[y][x] = 1
- 
-        d = [(x - 1, y), (x, y + 1), (x + 1, y), (x, y - 1)]
-        shuffle(d)
-        for (xx, yy) in d:
-            if vis[yy][xx]: continue
-            if xx == x: hor[max(y, yy)][x] = [MAZE_WALL, SPACE, SPACE]
-            if yy == y: ver[y][max(x, xx)] = [SPACE, SPACE, SPACE]
-            walk(xx, yy)
-            
-    walk(randrange(w), randrange(h))
-
-    s = ""
-    for (a, b) in zip(hor, ver):
-        s += ''.join(a + ['\n'] + b + ['\n'])
-    return s
 
 
+#Set size.
+size=(sizex, sizey)
+screen=pygame.display.set_mode(size)
 
-MAZE_WALL = pygame.draw.rect(screen, WALL_COLOR, [25, 25, 25, 25])
-SPACE = pygame.draw.rect(screen, BLACK, [25, 25, 25, 25])
+pygame.display.set_caption("Make Purple!")
+clock = pygame.time.Clock()
+screen.fill(WHITE)
 
-if __name__ == '__main__':
-    print(make_maze())
-    
-"""# make walls
-wall1 =  [300, 275, 200, 25]
-wall2 =  [400, 450, 200, 25]
-wall3 =  [100, 100, 25, 200]
+pygame.draw.rect(screen,BLACK,[100,100,sizex-199,sizey-199],2)
 
-walls = [wall1, wall2, wall3]
+pygame.display.flip()
 
-# Make coins
-coin1 = [300, 500, 25, 25]
-coin2 = [400, 200, 25, 25]
-coin3 = [150, 150, 25, 25]
+#Draw the grid.
+for x in range(length):
+    pygame.draw.line(screen,BLACK,[(x*space+100),100],[(x*space+100),sizey-100],2)        #Vertical lines.
+for x in range(width):
+    pygame.draw.line(screen,BLACK,[100,(x*space+100)],[sizex-100,(x*space+100)],2)        #Horizontal lines.
 
-coins = [coin1, coin2, coin3]"""
+pygame.display.flip()
 
+place = [[0 for y in range(width)] for x in range(length)]
+wall = [[[1 for z in range(4)] for y in range(width)] for x in range(length)]
+#If wall is [0,1,2,3], 0:up 1:down 2:left 3:right.
 
-# Game loop
-win = False
-score = 0
+i=0
+j=0
+place[i][j]=1
 
-done = False
+done=False
 
+#Randomly generates the maze.
 while not done:
-    # Event processing (React to key presses, mouse clicks, etc.)
-    ''' for now, we'll just check to see if the X is clicked '''
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
 
-    pressed = pygame.key.get_pressed()
+    sumcheck=0
 
-    up = pressed[pygame.K_UP]
-    down = pressed[pygame.K_DOWN]
-    left = pressed[pygame.K_LEFT]
-    right = pressed[pygame.K_RIGHT]
+    newplace=0
 
-    if up:
-        player_vy = -player_speed
-    elif down:
-        player_vy = player_speed
+    direction = random.randint(0,3) #0:up 1:down 2:left 3:right.
+    if direction==0:
+        if j!=0:
+            if place[i][j-1]==0:
+                pygame.draw.line(screen,WHITE,[space*i+102,space*j+100],[space*i+99+space,space*j+100],2)
+                wall[i][j][0]=0
+                j=j-1
+                place[i][j]=1
+                wall[i][j][1]=0
+    elif direction==1:
+        if j!=width-1:
+            if place[i][j+1]==0:
+                pygame.draw.line(screen,WHITE,[space*i+102,space*j+100+space],[space*i+99+space,space*j+100+space],2)
+                wall[i][j][1]=0
+                j=j+1
+                place[i][j]=1
+                wall[i][j][0]=0
+    elif direction==2:
+        if i!=0:
+            if place[i-1][j]==0:
+                pygame.draw.line(screen,WHITE,[space*i+100,space*j+102],[space*i+100,space*j+99+space],2)
+                wall[i][j][2]=0
+                i=i-1
+                place[i][j]=1
+                wall[i][j][3]=0
     else:
-        player_vy = 0
-        
-    if left:
-        player_vx = -player_speed
-    elif right:
-        player_vx = player_speed
+        if i!=length-1:
+            if place[i+1][j]==0:
+                pygame.draw.line(screen,WHITE,[space*i+100+space,space*j+102],[space*i+100+space,space*j+99+space],2)
+                wall[i][j][3]=0
+                i=i+1
+                place[i][j]=1
+                wall[i][j][2]=0
+
+    #These statements test if place is stuck.
+    if (i==0) and (j==0):
+        if (place[i+1][j]==1) and (place[i][j+1]==1):
+            #Top left corner
+            newplace=1
+    elif (i==length-1) and (j==0):
+        if (place[i-1][j]==1) and (place[i][j+1]==1):
+            #Top right corner
+            newplace=1
+    elif (i==0) and (j==width-1):
+        if (place[i][j-1]==1) and (place[i+1][j]==1):
+            #Bottom left corner
+            newplace=1
+    elif (i==length-1) and (j==width-1):
+        if (place[i][j-1]==1) and (place[i-1][j]==1):
+            #Bottom right corner
+            newplace=1
+    elif (i==0) and (place[i][j-1]==1):
+        if (place[i+1][j]==1) and (place[i][j+1]==1):
+            #Left edge
+            newplace=1
+    elif (i==length-1):
+        if (place[i][j-1]==1) and (place[i-1][j]==1) and (place[i][j+1]==1):
+            #Right edge
+            newplace=1
+    elif (j==width-1):
+        if (place[i-1][j]==1) and (place[i][j-1]==1) and (place[i+1][j]==1):
+            #Top edge
+            newplace=1
+    elif (j==0):
+        if (place[i-1][j]==1) and (place[i][j+1]==1) and (place[i+1][j]==1):
+            #Bottom edge
+            newplace=1
+    elif (i!=0) and (j!=0) and (i!=length-1) and (j!=width-1):
+        if (place[i][j-1]==1) and (place[i][j+1]==1) and (place[i-1][j]==1) and (place[i+1][j]==1):
+            #Everything in between
+            newplace=1
     else:
-        player_vx = 0
-
-"""        
-    # Game logic (Check for collisions, update points, etc.)
-    ''' move the player in horizontal direction '''
-    player[0] += player_vx
-
-    ''' resolve collisions horizontally '''
-    for w in walls:
-        if intersects.rect_rect(player, w):        
-            if player_vx > 0:
-                player[0] = w[0] - player[2]
-            elif player_vx < 0:
-                player[0] = w[0] + w[2]
-
-    ''' move the player in vertical direction '''
-    player[1] += player_vy
-    
-    ''' resolve collisions vertically '''
-    for w in walls:
-        if intersects.rect_rect(player, w):                    
-            if player_vy > 0:
-                player[1] = w[1] - player[3]
-            if player_vy < 0:
-                player[1] = w[1] + w[3]
+        pass
 
 
-    ''' here is where you should resolve player collisions with screen edges '''
+    #If stuck, find a new place.
+    donemini = False
+    if newplace==1:
+        while not donemini:
+            i=random.randint(0,length-1)
+            j=random.randint(0,width-1)
+            if place[i][j]!=1:
+                pass
+            else:
+                donemini=True
 
-
-
-
-
-    ''' get the coins '''
-    #coins = [c for c in coins if not intersects.rect_rect(player, c)]
-
-    '''
-    hit_list = []
-
-    for c in coins:
-        if intersects.rect_rect(player, c):
-            hit_list.append(c)
-    '''
-     
-    hit_list = [c for c in coins if intersects.rect_rect(player, c)]
-    
-    for hit in hit_list:
-        coins.remove(hit)
-        score += 1
-        print("sound!")
-        
-
-        
-    
-
-    
-    if len(coins) == 0:
-        win = True
-
-"""        
-    # Drawing code (Describe the picture. It isn't actually drawn yet.)
-    screen.fill(BLACK)
-
-    pygame.draw.rect(screen, WHITE, player)
-    
-    for w in walls:
-        pygame.draw.rect(screen, RED, w)
-
-    for c in coins:
-        pygame.draw.rect(screen, YELLOW, c)
-
-
-    # blit score on the screen somewhere
-    
-    if win:
-        font = pygame.font.Font(None, 48)
-        text = font.render("You Win!", 1, BLUE)
-        screen.blit(text, [400, 200])
-
-    
-    # Update screen (Actually draw the picture in the window.)
     pygame.display.flip()
 
+    for x in range(length):
+        for y in range(width):
+            sumcheck=sumcheck+place[x][y]
+    pygame.display.set_caption("Progress: "+str((int(sumcheck/(width*length)*1000))/10)+"% (Might take a while for bigger mazes)")
+    if sumcheck==width*length:
+        done=True
 
-    # Limit refresh rate of game loop 
-    clock.tick(refresh_rate)
 
+i=0
+j=0
+pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
 
-# Close window and quit
+i=length-1
+j=width-1
+pygame.draw.rect(screen,BLUE,[102+i*space,102+j*space,space-2,space-2],0)
+
+pygame.display.set_caption("Make Purple!")
+
+pygame.display.flip()
+done = False
+
+i=0
+j=0
+
+win=0
+
+escape=False
+
+#Controlls the block through the maze.
+while not done:
+    for event in pygame.event.get():
+
+        if (i==length-1) and (j==width-1):
+            win=1
+            pygame.draw.rect(screen,PURPLE,[102+(length-1)*space,102+(width-1)*space,space-2,space-2],0)
+            print("Congradulations, you solved the maze!")
+            done=True
+
+        if event.type==pygame.QUIT:
+            done=True
+
+        #0:up 1:down 2:left 3:right.
+        if win==0:
+            if event.type==pygame.KEYDOWN:
+                direction=-1
+                if event.key==pygame.K_UP:
+                    direction=0
+                elif event.key==pygame.K_DOWN:
+                    direction=1
+                elif event.key==pygame.K_LEFT:
+                    direction=2
+                elif event.key==pygame.K_RIGHT:
+                    direction=3
+                elif event.key==pygame.K_ESCAPE:
+                    direction=4
+                else:
+                    pass
+
+                if direction==0:
+                    if wall[i][j][0]==0:
+                        pygame.draw.rect(screen,WHITE,[102+i*space,102+j*space,space-2,space-2],0)
+                        j=j-1
+                        pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                elif direction==1:
+                    if wall[i][j][1]==0:
+                        pygame.draw.rect(screen,WHITE,[102+i*space,102+j*space,space-2,space-2],0)
+                        j=j+1
+                        pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                elif direction==2:
+                    if wall[i][j][2]==0:
+                        pygame.draw.rect(screen,WHITE,[102+i*space,102+j*space,space-2,space-2],0)
+                        i=i-1
+                        pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                elif direction==3:
+                    if wall[i][j][3]==0:
+                        pygame.draw.rect(screen,WHITE,[102+i*space,102+j*space,space-2,space-2],0)
+                        i=i+1
+                        pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                elif direction==4:
+                    #Automatically solve the maze.
+                    pygame.draw.rect(screen,WHITE,[102+i*space,102+j*space,space-2,space-2],0)
+
+                    i=0
+                    j=0
+                    solved=False
+                    past=4
+                    color=[[0 for y in range(width)] for x in range(length)]
+                    newcolor=0
+
+                    while not solved:
+                        newcolor=0
+                        #0:up 1:down 2:left 3:right.
+                        direction=random.randint(0,3)
+
+                        if direction==0:
+                            if wall[i][j][0]==0:
+                                if past==1:
+                                    pass
+                                else:
+                                    pygame.draw.rect(screen,LRED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    j=j-1
+                                    color[i][j]=1
+                                    pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    past=0
+                        elif direction==1:
+                            if wall[i][j][1]==0:
+                                if past==0:
+                                    pass
+                                else:
+                                    pygame.draw.rect(screen,LRED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    j=j+1
+                                    color[i][j]=1
+                                    pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    past=1
+                        elif direction==2:
+                            if wall[i][j][2]==0:
+                                if past==3:
+                                    pass
+                                else:
+                                    pygame.draw.rect(screen,LRED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    i=i-1
+                                    color[i][j]=1
+                                    pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    past=2
+                        else:
+                            if wall[i][j][3]==0:
+                                if past==2:
+                                    pass
+                                else:
+                                    pygame.draw.rect(screen,LRED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    i=i+1
+                                    color[i][j]=1
+                                    pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                                    past=3
+
+                        if (i==length-1) and (j==width-1):
+                            solved=True
+                            i=0
+                            j=0
+                            pygame.draw.rect(screen,RED,[102+i*space,102+j*space,space-2,space-2],0)
+                            i=length-1
+                            j=width-1
+                            pygame.draw.rect(screen,BLUE,[102+i*space,102+j*space,space-2,space-2],0)
+                            i=0
+                            j=0
+
+                        elif ((wall[i][j][0]==1) and (wall[i][j][2]==1) and (wall[i][j][3]==1)) or ((wall[i][j][1]==1) and (wall[i][j][2]==1) and (wall[i][j][3]==1)) or ((wall[i][j][0]==1) and (wall[i][j][1]==1) and (wall[i][j][2]==1)) or ((wall[i][j][0]==1) and (wall[i][j][1]==1) and (wall[i][j][3]==1)):                 
+                            newcolor=1
+
+                        if newcolor==1:
+                            for i in range(length):
+                                for j in range(width):
+                                    if color[i][j]==1:
+                                        pygame.draw.rect(screen,WHITE,[102+i*space,102+j*space,space-2,space-2],0)
+                            i=0
+                            j=0
+
+                        pygame.display.flip()
+                else:
+                    pass
+
+        pygame.display.flip()
+
+        clock.tick(120)
+
+time.sleep(2)
 pygame.quit()
